@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Structure Visualizer</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+:root{
+  --lv1:#faf5ff;--lv2:#f3e8ff;--lv3:#e9d5ff;--lv4:#d8b4fe;
+  --lv5:#c084fc;--lv6:#a855f7;--lv7:#9333ea;--lv8:#7e22ce;--lv9:#6b21a8;
+  --indigo:#6366f1;--text:#1e1b4b;--tl:#6b7280;--card:rgba(255,255,255,0.88);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#f3e8ff,#e9d5ff 35%,#faf5ff 65%,#ede9fe);min-height:100vh;color:var(--text);overflow-x:hidden;}
+
+/* PARTICLES */
+.particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.particle{position:absolute;border-radius:50%;animation:floatUp linear infinite;opacity:0;}
+@keyframes floatUp{0%{transform:translateY(100vh) rotate(0deg);opacity:0;}10%{opacity:.7;}90%{opacity:.7;}100%{transform:translateY(-10vh) rotate(720deg);opacity:0;}}
+
+/* SIDEBAR */
+#sidebar{position:fixed;left:0;top:0;width:240px;height:100%;background:linear-gradient(180deg,var(--lv8),var(--lv9));z-index:100;box-shadow:4px 0 24px rgba(126,34,206,.3);display:none;flex-direction:column;}
+#sidebar.active{display:flex;}
+.sb-head{padding:28px 20px 18px;background:rgba(0,0,0,.15);border-bottom:1px solid rgba(255,255,255,.1);}
+.sb-head h3{color:var(--lv3);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;}
+.sb-head h2{color:#fff;font-size:17px;font-weight:700;}
+.sb-nav{flex:1;padding:14px 10px;overflow-y:auto;}
+.sb-btn{width:100%;margin:3px 0;padding:11px 14px;border:none;border-radius:11px;background:transparent;color:rgba(255,255,255,.7);cursor:pointer;font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;text-align:left;display:flex;align-items:center;gap:9px;transition:all .2s;}
+.sb-btn:hover{background:rgba(255,255,255,.13);color:#fff;transform:translateX(4px);}
+.sb-btn.active-btn{background:rgba(255,255,255,.22);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.2);}
+.sb-foot{padding:14px 10px;border-top:1px solid rgba(255,255,255,.1);}
+
+/* MAIN */
+#main{transition:margin-left .35s cubic-bezier(.4,0,.2,1);min-height:100vh;position:relative;z-index:1;}
+#main.shifted{margin-left:240px;}
+
+/* HOME */
+#home-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;text-align:center;}
+.badge{display:inline-block;background:rgba(168,85,247,.14);color:var(--lv7);padding:5px 18px;border-radius:50px;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:18px;border:1px solid rgba(168,85,247,.25);}
+.home-title{font-size:clamp(2.4rem,5vw,4rem);font-weight:800;background:linear-gradient(135deg,var(--lv8),var(--lv6),var(--indigo));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.15;margin-bottom:14px;max-width:680px;}
+.home-sub{color:var(--tl);font-size:15px;margin-bottom:56px;max-width:460px;}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;max-width:660px;width:100%;}
+.cat-card{background:var(--card);backdrop-filter:blur(18px);border:1px solid rgba(168,85,247,.2);border-radius:22px;padding:38px 30px;cursor:pointer;transition:all .3s cubic-bezier(.4,0,.2,1);box-shadow:0 8px 32px rgba(147,51,234,.12);position:relative;overflow:hidden;}
+.cat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--lv6),var(--indigo));border-radius:22px 22px 0 0;}
+.cat-card:hover{transform:translateY(-8px);box-shadow:0 20px 56px rgba(147,51,234,.22);border-color:rgba(168,85,247,.4);}
+.cat-icon{font-size:46px;margin-bottom:14px;display:block;filter:drop-shadow(0 4px 8px rgba(147,51,234,.3));}
+.cat-name{font-size:21px;font-weight:700;margin-bottom:7px;}
+.cat-desc{font-size:12px;color:var(--tl);line-height:1.6;margin-bottom:18px;}
+.pills{display:flex;flex-wrap:wrap;gap:5px;}
+.pill{background:rgba(168,85,247,.1);color:var(--lv8);padding:2px 9px;border-radius:50px;font-size:10px;font-weight:500;}
+
+/* CATEGORY */
+#category-page{display:none;}
+.cat-hdr{background:linear-gradient(135deg,var(--lv8),var(--lv7));padding:22px 28px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 18px rgba(126,34,206,.28);}
+.back-btn{background:rgba(255,255,255,.2);border:none;color:#fff;padding:9px 16px;border-radius:9px;cursor:pointer;font-family:'Poppins',sans-serif;font-size:12px;font-weight:500;display:flex;align-items:center;gap:5px;transition:all .2s;backdrop-filter:blur(8px);}
+.back-btn:hover{background:rgba(255,255,255,.3);transform:translateX(-2px);}
+.cat-hdr-title{color:#fff;font-size:19px;font-weight:700;}
+
+/* DS PAGE */
+#ds-page{display:none;}
+.ds-content{padding:28px 30px;max-width:1060px;}
+.ds-hdr{margin-bottom:24px;}
+.ds-hdr h1{font-size:30px;font-weight:800;background:linear-gradient(135deg,var(--lv8),var(--lv6));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.ds-hdr p{color:var(--tl);font-size:13px;margin-top:3px;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.icard{background:var(--card);backdrop-filter:blur(18px);border:1px solid rgba(168,85,247,.13);border-radius:15px;padding:18px 22px;box-shadow:0 4px 18px rgba(147,51,234,.07);}
+.icard h3{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lv6);margin-bottom:8px;}
+.icard p{font-size:13px;line-height:1.7;color:#374151;}
+.cx-table{width:100%;border-collapse:collapse;font-size:12px;}
+.cx-table th{background:rgba(168,85,247,.09);color:var(--lv8);padding:7px 12px;text-align:left;font-weight:600;font-size:11px;letter-spacing:1px;text-transform:uppercase;}
+.cx-table td{padding:7px 12px;border-bottom:1px solid rgba(168,85,247,.07);}
+.cx-table tr:last-child td{border-bottom:none;}
+.cb{display:inline-block;padding:2px 9px;border-radius:5px;font-size:11px;font-weight:600;}
+.o1{background:#d1fae5;color:#065f46;}.on{background:#fef3c7;color:#92400e;}.ologn{background:#dbeafe;color:#1e40af;}.on2{background:#fee2e2;color:#991b1b;}
+
+/* OPS */
+.ops-card{background:var(--card);backdrop-filter:blur(18px);border:1px solid rgba(168,85,247,.13);border-radius:15px;padding:20px 22px;margin-bottom:14px;box-shadow:0 4px 18px rgba(147,51,234,.07);}
+.ops-card h3{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lv6);margin-bottom:14px;}
+.inp-row{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+.ds-input{padding:10px 15px;border:2px solid rgba(168,85,247,.28);border-radius:9px;font-family:'Poppins',sans-serif;font-size:13px;outline:none;background:rgba(255,255,255,.9);color:var(--text);min-width:160px;transition:border-color .2s;}
+.ds-input:focus{border-color:var(--lv6);}
+.op-btn{padding:10px 18px;border:none;border-radius:9px;font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;}
+.btn-i{background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;}
+.btn-d{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;}
+.btn-s{background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;}
+.btn-disp{background:linear-gradient(135deg,#10b981,#059669);color:#fff;}
+.op-btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.18);}
+.op-btn:active{transform:translateY(0);}
+.hint{font-size:11px;color:var(--tl);font-style:italic;margin-top:4px;}
+
+/* VIZ */
+.viz-card{background:var(--card);backdrop-filter:blur(18px);border:1px solid rgba(168,85,247,.13);border-radius:15px;padding:22px;box-shadow:0 4px 18px rgba(147,51,234,.07);margin-bottom:14px;min-height:280px;}
+.viz-card h3{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lv6);margin-bottom:18px;}
+#viz-canvas{width:100%;min-height:220px;position:relative;overflow:hidden;}
+
+/* STEP INDICATOR */
+.step-bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:12px;min-height:28px;}
+.step-chip{padding:3px 12px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(168,85,247,.12);color:var(--lv7);border:1px solid rgba(168,85,247,.2);animation:chipIn .3s ease;}
+.step-chip.active{background:var(--lv7);color:#fff;}
+@keyframes chipIn{from{transform:scale(.7);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+/* ARRAY */
+.arr-wrap{display:flex;align-items:flex-end;gap:5px;flex-wrap:wrap;padding:20px 0 10px;}
+.arr-cell{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.arr-box{min-width:58px;height:58px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;color:var(--lv9);background:linear-gradient(135deg,var(--lv3),var(--lv4));border:2.5px solid var(--lv5);box-shadow:0 4px 12px rgba(168,85,247,.18);transition:all .4s cubic-bezier(.34,1.56,.64,1);position:relative;}
+.arr-box.highlight{background:linear-gradient(135deg,#fde68a,#fbbf24);border-color:#f59e0b;box-shadow:0 0 20px rgba(251,191,36,.6);}
+.arr-box.found{background:linear-gradient(135deg,#a7f3d0,#6ee7b7);border-color:#10b981;box-shadow:0 0 20px rgba(16,185,129,.5);}
+.arr-box.notfound{background:linear-gradient(135deg,#fecaca,#f87171);border-color:#ef4444;}
+.arr-box.new-item{animation:bounceIn .5s cubic-bezier(.34,1.56,.64,1);}
+.arr-box.removing{animation:fadeOut .4s ease forwards;}
+.arr-idx{font-size:10px;color:var(--lv6);font-weight:600;}
+.arr-arrow{font-size:18px;color:var(--lv4);align-self:center;margin-bottom:18px;}
+@keyframes bounceIn{0%{transform:scale(0) translateY(-30px);opacity:0;}60%{transform:scale(1.2) translateY(0);opacity:1;}100%{transform:scale(1);}  }
+@keyframes fadeOut{to{transform:scale(0);opacity:0;}}
+
+/* STACK */
+.stack-wrap{display:flex;flex-direction:column;align-items:center;padding:10px 0;}
+.stack-top-lbl{font-size:11px;font-weight:700;color:var(--lv6);letter-spacing:1px;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.stack-top-lbl::after{content:'▼';font-size:9px;}
+.stack-item{width:160px;height:52px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;margin:3px 0;position:relative;transition:all .3s;}
+.stack-item.top-item{background:linear-gradient(135deg,var(--lv6),var(--lv7));color:#fff;box-shadow:0 6px 20px rgba(147,51,234,.4);}
+.stack-item.normal-item{background:linear-gradient(135deg,var(--lv3),var(--lv4));color:var(--lv9);box-shadow:0 3px 10px rgba(168,85,247,.15);}
+.stack-item.push-anim{animation:pushDown .5s cubic-bezier(.34,1.56,.64,1);}
+.stack-item.pop-anim{animation:popUp .4s ease forwards;}
+.stack-base{width:180px;height:9px;background:var(--lv8);border-radius:5px;margin-top:5px;box-shadow:0 3px 10px rgba(126,34,206,.3);}
+.stack-bot-lbl{font-size:10px;font-weight:600;color:var(--lv6);margin-top:5px;letter-spacing:1px;}
+@keyframes pushDown{from{transform:translateY(-50px) scale(.8);opacity:0;}to{transform:translateY(0) scale(1);opacity:1;}}
+@keyframes popUp{to{transform:translateY(-60px) scale(.5);opacity:0;}}
+
+/* QUEUE */
+.queue-wrap{padding:20px 0;overflow-x:auto;}
+.queue-track{display:flex;align-items:center;gap:0;min-width:max-content;}
+.q-label{padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;}
+.q-label.front{background:linear-gradient(135deg,#10b981,#059669);}
+.q-label.rear{background:linear-gradient(135deg,#f59e0b,#d97706);}
+.q-cell{min-width:62px;height:56px;background:linear-gradient(135deg,var(--lv3),var(--lv4));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:var(--lv9);border-top:2.5px solid var(--lv5);border-bottom:2.5px solid var(--lv5);position:relative;}
+.q-cell:first-of-type{border-left:2.5px solid var(--lv5);border-radius:10px 0 0 10px;background:linear-gradient(135deg,var(--lv5),var(--lv6));color:#fff;}
+.q-cell:last-of-type{border-right:2.5px solid var(--lv5);border-radius:0 10px 10px 0;}
+.q-cell.enqueue-anim{animation:slideInRight .45s cubic-bezier(.34,1.56,.64,1);}
+.q-cell.dequeue-anim{animation:slideOutLeft .4s ease forwards;}
+.q-div{width:2px;height:56px;background:rgba(168,85,247,.3);}
+.q-connector{font-size:11px;color:var(--lv4);margin:0 8px;}
+@keyframes slideInRight{from{transform:translateX(60px) scale(.8);opacity:0;}to{transform:translateX(0) scale(1);opacity:1;}}
+@keyframes slideOutLeft{to{transform:translateX(-60px) scale(.5);opacity:0;}}
+
+/* LINKED LIST */
+.ll-wrap{padding:20px 0;overflow-x:auto;}
+.ll-track{display:flex;align-items:center;flex-wrap:wrap;gap:0;min-width:max-content;}
+.ll-head-badge{background:var(--lv7);color:#fff;padding:4px 12px;border-radius:8px;font-size:11px;font-weight:700;margin-right:10px;}
+.ll-node{display:flex;animation:nodeSlide .4s cubic-bezier(.34,1.56,.64,1);}
+.ll-data-box{min-width:58px;height:52px;background:linear-gradient(135deg,var(--lv3),var(--lv4));border:2.5px solid var(--lv5);border-right:1px solid var(--lv5);border-radius:10px 0 0 10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:var(--lv9);}
+.ll-ptr-box{width:38px;height:52px;background:rgba(168,85,247,.12);border:2.5px solid var(--lv5);border-left:none;border-radius:0 10px 10px 0;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--lv6);}
+.ll-ptr-box.null-box{font-size:9px;font-weight:700;color:var(--lv7);}
+.ll-arrow-connector{display:flex;align-items:center;font-size:20px;color:var(--lv5);padding:0 3px;}
+.ll-node.removing{animation:nodeRemove .4s ease forwards;}
+@keyframes nodeSlide{from{transform:scale(.5) translateY(-20px);opacity:0;}to{transform:scale(1) translateY(0);opacity:1;}}
+@keyframes nodeRemove{to{transform:scale(0);opacity:0;width:0;overflow:hidden;}}
+
+/* SVG TREE / HEAP / GRAPH */
+.svg-canvas{width:100%;display:block;}
+.tree-edge{stroke:#c084fc;stroke-width:2.5;fill:none;transition:stroke .4s;}
+.tree-circ{fill:#e9d5ff;stroke:#a855f7;stroke-width:2.5;transition:all .4s;}
+.tree-circ.root-circ{fill:#a855f7;stroke:#7e22ce;}
+.tree-circ.found-circ{fill:#6ee7b7;stroke:#10b981;}
+.tree-circ.notfound-circ{fill:#f87171;stroke:#ef4444;}
+.tree-circ.highlight-circ{fill:#fbbf24;stroke:#f59e0b;animation:pulse .5s ease infinite alternate;}
+.tree-txt{font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;dominant-baseline:middle;text-anchor:middle;fill:#4c1d95;transition:fill .4s;}
+.tree-txt.root-txt{fill:#fff;}
+.tree-txt.found-txt{fill:#065f46;}
+.tree-txt.notfound-txt{fill:#fff;}
+.graph-edge-line{stroke:#c084fc;stroke-width:2.5;stroke-linecap:round;}
+.graph-circ{fill:#d8b4fe;stroke:#a855f7;stroke-width:2.5;transition:all .4s;}
+.graph-circ.search-found{fill:#6ee7b7;stroke:#10b981;}
+.graph-circ.search-nf{fill:#f87171;stroke:#ef4444;}
+.graph-txt{font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;dominant-baseline:middle;text-anchor:middle;fill:#4c1d95;}
+@keyframes pulse{from{filter:drop-shadow(0 0 4px rgba(251,191,36,.6));}to{filter:drop-shadow(0 0 12px rgba(251,191,36,1));}}
+.node-appear{animation:nodeAppear .5s cubic-bezier(.34,1.56,.64,1);}
+@keyframes nodeAppear{from{transform-origin:50% 50%;transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+/* EXPLAIN */
+.explain-card{background:linear-gradient(135deg,rgba(168,85,247,.07),rgba(99,102,241,.07));border:1px solid rgba(168,85,247,.18);border-radius:15px;padding:18px 22px;margin-bottom:14px;}
+.explain-card h3{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lv6);margin-bottom:10px;}
+.exp-row{display:flex;gap:8px;align-items:flex-start;margin:5px 0;}
+.exp-lbl{min-width:115px;font-weight:600;color:var(--lv7);font-size:12px;}
+.exp-val{color:var(--text);font-size:12px;line-height:1.7;}
+code.exp-code{background:rgba(168,85,247,.1);padding:2px 8px;border-radius:4px;font-size:11px;font-family:monospace;}
+code.exp-code.after{background:rgba(16,185,129,.1);}
+.exp-badge{display:inline-block;padding:2px 9px;border-radius:5px;font-size:11px;font-weight:700;background:rgba(168,85,247,.14);color:var(--lv7);}
+
+/* NAV BUTTONS */
+.nav-btns{display:flex;gap:12px;flex-wrap:wrap;padding:14px 30px 30px;}
+.lbtn{padding:13px 26px;border:none;border-radius:11px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .25s;}
+.lbtn-home{background:linear-gradient(135deg,var(--lv7),var(--lv8));color:#fff;box-shadow:0 6px 20px rgba(147,51,234,.32);}
+.lbtn-cat{background:var(--card);color:var(--lv7);border:2px solid var(--lv4);}
+.lbtn:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(147,51,234,.28);}
+
+/* EMPTY */
+.empty-st{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;color:var(--tl);}
+.empty-icon{font-size:38px;margin-bottom:8px;opacity:.4;}
+
+/* TOAST */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--lv8);color:#fff;padding:10px 22px;border-radius:50px;font-size:13px;font-weight:500;opacity:0;transition:all .3s;z-index:9999;white-space:nowrap;pointer-events:none;box-shadow:0 6px 20px rgba(126,34,206,.4);}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media(max-width:680px){
+  .info-grid{grid-template-columns:1fr;}
+  .cat-grid{grid-template-columns:1fr;}
+  .ds-content{padding:14px 16px;}
+  #sidebar{width:200px;}
+  #main.shifted{margin-left:200px;}
+}
+</style>
+</head>
+<body>
+<div class="particles" id="particles"></div>
+<div id="toast"></div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sb-head">
+    <h3 id="sb-cat-lbl">Linear</h3>
+    <h2 id="sb-cat-title">Data Structures</h2>
+  </div>
+  <div class="sb-nav" id="sb-nav"></div>
+  <div class="sb-foot">
+    <button class="sb-btn" onclick="goToCategory()" style="background:rgba(255,255,255,.12);color:#fff;">◀ Back to Category</button>
+    <button class="sb-btn" onclick="goHome()" style="background:rgba(255,255,255,.12);color:#fff;margin-top:4px;">🏠 Back to Home</button>
+  </div>
+</div>
+
+<div id="main">
+
+<!-- HOME -->
+<div id="home-page">
+  <div class="badge">✨ Interactive Animated Visualizer</div>
+  <h1 class="home-title">Data Structure<br>Visualizer</h1>
+  <p class="home-sub">Explore, learn & interact with real animations and step-by-step explanations</p>
+  <div class="cat-grid">
+    <div class="cat-card" onclick="openCategory('linear')">
+      <span class="cat-icon">📊</span>
+      <div class="cat-name">Linear</div>
+      <div class="cat-desc">Sequential data structures arranged in linear order</div>
+      <div class="pills">
+        <span class="pill">Array</span><span class="pill">Stack</span><span class="pill">Queue</span><span class="pill">Linked List</span>
+      </div>
+    </div>
+    <div class="cat-card" onclick="openCategory('nonlinear')">
+      <span class="cat-icon">🌳</span>
+      <div class="cat-name">Non-Linear</div>
+      <div class="cat-desc">Hierarchical structures with non-sequential connections</div>
+      <div class="pills">
+        <span class="pill">Tree (BST)</span><span class="pill">Max Heap</span><span class="pill">Graph</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY -->
+<div id="category-page">
+  <div class="cat-hdr">
+    <button class="back-btn" onclick="goHome()">🏠 Home</button>
+    <h2 class="cat-hdr-title" id="cat-title">Linear Data Structures</h2>
+  </div>
+  <div style="padding:28px;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px;max-width:880px;" id="cat-cards"></div>
+</div>
+
+<!-- DS PAGE -->
+<div id="ds-page">
+  <div class="ds-content">
+    <div class="ds-hdr">
+      <h1 id="ds-title">Array</h1>
+      <p id="ds-sub">Linear Data Structure</p>
+    </div>
+
+    <div class="info-grid">
+      <div class="icard"><h3>Definition</h3><p id="ds-def"></p></div>
+      <div class="icard"><h3>Characteristics</h3><p id="ds-chars"></p></div>
+    </div>
+
+    <div class="icard" style="margin-bottom:14px;">
+      <h3>Time Complexity</h3>
+      <table class="cx-table" id="cx-table"></table>
+    </div>
+
+    <div class="ops-card">
+      <h3>Operations</h3>
+      <div class="inp-row">
+        <input class="ds-input" id="ds-input" type="number" placeholder="Enter a number" />
+        <button class="op-btn btn-i" onclick="opInsert()">➕ Insert</button>
+        <button class="op-btn btn-d" onclick="opDelete()">🗑 Delete</button>
+        <button class="op-btn btn-s" onclick="opSearch()">🔍 Search</button>
+        <button class="op-btn btn-disp" onclick="opDisplay()">👁 Display</button>
+      </div>
+      <div class="hint" id="op-hint"></div>
+    </div>
+
+    <div class="viz-card">
+      <h3>Visualization</h3>
+      <div class="step-bar" id="step-bar"></div>
+      <div id="viz-canvas"><div class="empty-st"><div class="empty-icon">📭</div><p>Insert values to visualize</p></div></div>
+    </div>
+
+    <div class="explain-card">
+      <h3>Explanation Panel</h3>
+      <div id="exp-panel"><p style="color:var(--tl);font-size:12px;">Perform an operation to see step-by-step explanation.</p></div>
+    </div>
+  </div>
+  <div class="nav-btns">
+    <button class="lbtn lbtn-cat" onclick="goToCategory()">◀ Back to Category</button>
+    <button class="lbtn lbtn-home" onclick="goHome()">🏠 Back to Home</button>
+  </div>
+</div>
+
+</div><!-- #main -->
+
+<script>
+// ═══════════════════════════════════════════════
+// DS METADATA
+// ═══════════════════════════════════════════════
+const DS_INFO = {
+  Array:{cat:'linear',icon:'📦',
+    def:'An array stores elements in contiguous memory locations, accessible via integer index. Simplest and most widely-used data structure.',
+    chars:'Fixed size. Contiguous memory. O(1) random access by index. Homogeneous elements. Index starts at 0.',
+    cx:[['Access by Index','O(1)','O(1)'],['Search (Linear)','O(n)','O(n)'],['Insert at End','O(1)','O(1)'],['Insert at Position','O(n)','O(n)'],['Delete','O(n)','O(n)']]},
+  Stack:{cat:'linear',icon:'📚',
+    def:'A Stack follows LIFO (Last In, First Out). The element inserted last is removed first. Like a stack of plates.',
+    chars:'LIFO order. Push adds to top. Pop removes from top. Peek views top without removal. Used in recursion, undo operations, expression evaluation.',
+    cx:[['Push (Insert)','O(1)','O(1)'],['Pop (Delete)','O(1)','O(1)'],['Peek/Top','O(1)','O(1)'],['Search','O(n)','O(n)']]},
+  Queue:{cat:'linear',icon:'🚶',
+    def:'A Queue follows FIFO (First In, First Out). Elements added at Rear, removed from Front. Like a queue at a ticket counter.',
+    chars:'FIFO order. Enqueue at Rear. Dequeue from Front. Front and Rear pointers maintained. Used in BFS, scheduling, buffers.',
+    cx:[['Enqueue (Insert)','O(1)','O(1)'],['Dequeue (Delete)','O(1)','O(1)'],['Front/Rear','O(1)','O(1)'],['Search','O(n)','O(n)']]},
+  'Linked List':{cat:'linear',icon:'🔗',
+    def:'A Linked List stores elements in nodes, each containing data and a pointer to the next node. Nodes need not be in contiguous memory.',
+    chars:'Dynamic size. Non-contiguous memory. HEAD points to first node. Last node points to NULL. Efficient insert/delete at beginning.',
+    cx:[['Insert at Head','O(1)','O(1)'],['Insert at Tail','O(n)','O(n)'],['Delete by Value','O(n)','O(n)'],['Search','O(n)','O(n)'],['Access by Index','O(n)','O(n)']]},
+  Tree:{cat:'nonlinear',icon:'🌳',
+    def:'A Binary Search Tree (BST): for every node, left subtree values are smaller and right subtree values are larger. In-order traversal gives sorted output.',
+    chars:'Hierarchical. Left < Parent < Right (BST property). Root = topmost node. Leaf nodes have no children. Height determines complexity.',
+    cx:[['Insert','O(log n)','O(n)'],['Delete','O(log n)','O(n)'],['Search','O(log n)','O(n)'],['Traversal','O(n)','O(n)']]},
+  Heap:{cat:'nonlinear',icon:'⛰',
+    def:'A Max Heap is a complete binary tree where every parent ≥ its children. Root always holds the maximum value. Ideal for priority queues.',
+    chars:'Complete binary tree. Max Heap: parent ≥ children. Root = maximum. Stored as array: parent at i, children at 2i+1 and 2i+2. Heapify maintains order.',
+    cx:[['Insert','O(log n)','O(log n)'],['Delete Max','O(log n)','O(log n)'],['Peek Max','O(1)','O(1)'],['Build Heap','O(n)','O(n)']]},
+  Graph:{cat:'nonlinear',icon:'🕸',
+    def:'A Graph has vertices (nodes) and edges (connections). Can be directed or undirected. Used to represent networks, maps, and relationships.',
+    chars:'Vertices connected by edges. Can be directed/undirected. May have cycles. Adjacency list or matrix representation. Used in social networks, routing.',
+    cx:[['Add Vertex','O(1)','O(1)'],['Add Edge','O(1)','O(1)'],['Remove Vertex','O(V+E)','O(V+E)'],['BFS/DFS','O(V+E)','O(V+E)']]}
+};
+const LINEAR=['Array','Stack','Queue','Linked List'];
+const NONLINEAR=['Tree','Heap','Graph'];
+const DS_ICONS={Array:'📦',Stack:'📚',Queue:'🚶','Linked List':'🔗',Tree:'🌳',Heap:'⛰',Graph:'🕸'};
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let currentCat='', currentDS='';
+let arrData=[], stackData=[], queueData=[], llData=[];
+let bstRoot=null, heapArr=[], graphV=[], graphE=[];
+let animLock=false;
+
+// ═══════════════════════════════════════════════
+// PARTICLES
+// ═══════════════════════════════════════════════
+(function(){
+  const c=document.getElementById('particles');
+  const cols=['#c084fc','#a855f7','#e879f9','#818cf8','#d8b4fe','#f0abfc'];
+  for(let i=0;i<30;i++){
+    const p=document.createElement('div');p.className='particle';
+    p.style.cssText=`left:${Math.random()*100}%;width:${2+Math.random()*5}px;height:${2+Math.random()*5}px;background:${cols[i%cols.length]};animation-duration:${7+Math.random()*10}s;animation-delay:${-Math.random()*14}s;border-radius:${Math.random()>.5?'50%':'3px'};`;
+    c.appendChild(p);
+  }
+})();
+
+// ═══════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════
+function show(id){['home-page','category-page','ds-page'].forEach(x=>document.getElementById(x).style.display='none');document.getElementById(id).style.display=id==='home-page'?'flex':'block';}
+
+function goHome(){
+  show('home-page');
+  document.getElementById('sidebar').classList.remove('active');
+  document.getElementById('main').classList.remove('shifted');
+  resetAll();
+}
+
+function openCategory(cat){
+  currentCat=cat;
+  show('category-page');
+  document.getElementById('sidebar').classList.remove('active');
+  document.getElementById('main').classList.remove('shifted');
+  const isLin=cat==='linear';
+  document.getElementById('cat-title').textContent=(isLin?'📊 Linear':'🌳 Non-Linear')+' Data Structures';
+  const list=isLin?LINEAR:NONLINEAR;
+  const cont=document.getElementById('cat-cards');cont.innerHTML='';
+  list.forEach(name=>{
+    const info=DS_INFO[name];
+    const d=document.createElement('div');d.className='cat-card';d.style.cursor='pointer';
+    d.innerHTML=`<span class="cat-icon">${info.icon}</span><div class="cat-name">${name}</div><div class="cat-desc" style="font-size:11px;margin-bottom:0;">${info.def.substring(0,85)}...</div>`;
+    d.onclick=()=>openDS(name);cont.appendChild(d);
+  });
+}
+
+function goToCategory(){if(!currentCat){goHome();return;}openCategory(currentCat);}
+
+function openDS(name){
+  currentDS=name;resetAll();
+  const info=DS_INFO[name];
+  show('ds-page');
+  document.getElementById('sidebar').classList.add('active');
+  document.getElementById('main').classList.add('shifted');
+  // sidebar
+  const list=info.cat==='linear'?LINEAR:NONLINEAR;
+  document.getElementById('sb-cat-lbl').textContent=info.cat==='linear'?'Linear':'Non-Linear';
+  const nav=document.getElementById('sb-nav');nav.innerHTML='';
+  list.forEach(ds=>{
+    const b=document.createElement('button');b.className='sb-btn'+(ds===name?' active-btn':'');
+    b.innerHTML=`<span style="font-size:16px;width:22px;text-align:center;">${DS_ICONS[ds]}</span>${ds}`;
+    b.onclick=()=>openDS(ds);nav.appendChild(b);
+  });
+  // fill info
+  document.getElementById('ds-title').textContent=name;
+  document.getElementById('ds-sub').textContent=(info.cat==='linear'?'📊 Linear':'🌳 Non-Linear')+' Data Structure';
+  document.getElementById('ds-def').textContent=info.def;
+  document.getElementById('ds-chars').textContent=info.chars;
+  // complexity table
+  const tbl=document.getElementById('cx-table');
+  tbl.innerHTML='<tr><th>Operation</th><th>Average</th><th>Worst</th></tr>';
+  info.cx.forEach(([op,avg,worst])=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${op}</td><td><span class="cb ${cxClass(avg)}">${avg}</span></td><td><span class="cb ${cxClass(worst)}">${worst}</span></td>`;
+    tbl.appendChild(tr);
+  });
+  // hint
+  const hint=document.getElementById('op-hint');
+  if(name==='Graph') hint.textContent='Insert: adds a numbered vertex (e.g. 10, 20). Each new vertex auto-connects to previous. Delete/Search by vertex number.';
+  else if(name==='Stack') hint.textContent='Delete removes the TOP element only (LIFO). Enter the top value to confirm delete.';
+  else if(name==='Queue') hint.textContent='Delete removes the FRONT element only (FIFO). Enter the front value to confirm delete.';
+  else hint.textContent='';
+  setSteps([]);
+  setExp('<p style="color:var(--tl);font-size:12px;">Perform an operation to see step-by-step explanation.</p>');
+  renderViz();
+}
+
+function cxClass(c){if(c==='O(1)')return 'o1';if(c.includes('log'))return 'ologn';if(c==='O(n)')return 'on';return 'on2';}
+
+function resetAll(){arrData=[];stackData=[];queueData=[];llData=[];bstRoot=null;heapArr=[];graphV=[];graphE=[];animLock=false;const i=document.getElementById('ds-input');if(i)i.value='';}
+
+// ═══════════════════════════════════════════════
+// STEP BAR
+// ═══════════════════════════════════════════════
+function setSteps(steps,activeIdx=-1){
+  const bar=document.getElementById('step-bar');bar.innerHTML='';
+  steps.forEach((s,i)=>{
+    const c=document.createElement('span');c.className='step-chip'+(i===activeIdx?' active':'');c.textContent=s;
+    bar.appendChild(c);
+    if(i<steps.length-1){const arr=document.createElement('span');arr.textContent='→';arr.style.cssText='font-size:12px;color:#c084fc;';bar.appendChild(arr);}
+  });
+}
+
+// ═══════════════════════════════════════════════
+// EXPLANATION
+// ═══════════════════════════════════════════════
+function setExp(html){document.getElementById('exp-panel').innerHTML=html;}
+function buildExp(obj){
+  const rows=[
+    ['Operation',obj.op],
+    obj.value!==undefined?['Value',String(obj.value)]:null,
+    obj.before!==undefined?['Before',`<code class="exp-code">${obj.before}</code>`]:null,
+    obj.after!==undefined?['After',`<code class="exp-code after">${obj.after}</code>`]:null,
+    obj.result!==undefined?['Result',obj.result]:null,
+    ['Complexity',`<span class="exp-badge">${obj.complexity}</span>`],
+    ['Explanation',obj.msg]
+  ].filter(Boolean);
+  let h='';rows.forEach(([l,v])=>{h+=`<div class="exp-row"><span class="exp-lbl">${l}:</span><span class="exp-val">${v}</span></div>`;});
+  setExp(h);
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ═══════════════════════════════════════════════
+// INPUT
+// ═══════════════════════════════════════════════
+function getVal(){return document.getElementById('ds-input').value.trim();}
+function getNum(){return parseInt(getVal());}
+function clearInput(){document.getElementById('ds-input').value='';}
+
+// ═══════════════════════════════════════════════
+// OPERATIONS DISPATCHER
+// ═══════════════════════════════════════════════
+function opInsert(){if(animLock)return;const v=getNum();if(isNaN(v)){toast('⚠️ Enter a number!');return;}
+  ({Array:insertArr,Stack:insertStack,Queue:insertQueue,'Linked List':insertLL,Tree:insertTree,Heap:insertHeap,Graph:insertGraph})[currentDS](v);clearInput();}
+
+function opDelete(){if(animLock)return;const v=getNum();if(isNaN(v)){toast('⚠️ Enter a number!');return;}
+  ({Array:deleteArr,Stack:deleteStack,Queue:deleteQueue,'Linked List':deleteLL,Tree:deleteTree,Heap:deleteHeap,Graph:deleteGraph})[currentDS](v);}
+
+function opSearch(){if(animLock)return;const v=getNum();if(isNaN(v)){toast('⚠️ Enter a number!');return;}
+  ({Array:searchArr,Stack:searchArr,Queue:searchArr,'Linked List':searchArr,Tree:searchTree,Heap:searchHeap,Graph:searchGraph})[currentDS](v);}
+
+function opDisplay(){if(animLock)return;
+  ({Array:displayArr,Stack:displayArr,Queue:displayArr,'Linked List':displayArr,Tree:displayTree,Heap:displayHeap,Graph:displayGraph})[currentDS]();}
+
+// ═══════════════════════════════════════════════
+// ARRAY OPS
+// ═══════════════════════════════════════════════
+async function insertArr(v){
+  const before=[...arrData];arrData.push(v);
+  setSteps(['Start','Reach end of array','Insert value','Done'],1);
+  renderViz('new',arrData.length-1);
+  await delay(500);
+  setSteps(['Start','Reach end of array','Insert value','Done'],2);
+  await delay(400);setSteps(['Start','Reach end of array','Insert value','Done'],3);
+  buildExp({op:'Insert',value:v,before:before.length?before.join(', '):'(empty)',after:arrData.join(', '),complexity:'O(1)',msg:`${v} appended at index ${arrData.length-1}. Arrays store elements in contiguous memory sequentially.`});
+  renderViz();
+}
+async function deleteArr(v){
+  const idx=arrData.indexOf(v);
+  if(idx===-1){toast(`❌ ${v} not found in Array!`);return;}
+  const before=[...arrData];
+  setSteps(['Find element','Highlight','Remove','Shift left','Done'],0);
+  await delay(300);setSteps(['Find element','Highlight','Remove','Shift left','Done'],1);
+  renderViz('highlight',idx);await delay(600);
+  setSteps(['Find element','Highlight','Remove','Shift left','Done'],2);
+  renderViz('remove',idx);await delay(500);
+  setSteps(['Find element','Highlight','Remove','Shift left','Done'],3);
+  arrData.splice(idx,1);await delay(400);
+  setSteps(['Find element','Highlight','Remove','Shift left','Done'],4);
+  buildExp({op:'Delete',value:v,before:before.join(', '),after:arrData.length?arrData.join(', '):'(empty)',complexity:'O(n)',msg:`Found ${v} at index ${idx}. Removed and shifted ${before.length-idx-1} element(s) left.`});
+  renderViz();
+}
+function searchArr(v){
+  const ds=currentDS==='Array'?arrData:currentDS==='Stack'?stackData:currentDS==='Queue'?queueData:llData;
+  const idx=ds.indexOf(v);const found=idx!==-1;
+  setSteps(['Start scan','Check each element',found?'Found!':'Not Found'],found?2:2);
+  renderViz('search',v);
+  buildExp({op:'Search',value:v,result:found?`✅ Found at index ${idx}`:`❌ Not Found`,complexity:'O(n)',msg:found?`${v} found at index ${idx} after scanning ${idx+1} element(s).`:`${v} not found after scanning all ${ds.length} element(s).`});
+}
+function displayArr(){
+  const ds=currentDS==='Array'?arrData:currentDS==='Stack'?stackData:currentDS==='Queue'?queueData:llData;
+  setSteps(['Traverse all','Display']);
+  buildExp({op:'Display',value:'All elements',result:ds.length?ds.join(', '):'(empty)',complexity:'O(n)',msg:`Displaying all ${ds.length} element(s) in order.`});
+  renderViz();
+}
+
+// ═══════════════════════════════════════════════
+// STACK OPS
+// ═══════════════════════════════════════════════
+async function insertStack(v){
+  const before=[...stackData];stackData.push(v);
+  setSteps(['Push starts','Move to top','Element placed','Done'],0);
+  await delay(200);setSteps(['Push starts','Move to top','Element placed','Done'],1);
+  renderViz('new',stackData.length-1);
+  await delay(500);setSteps(['Push starts','Move to top','Element placed','Done'],2);
+  await delay(300);setSteps(['Push starts','Move to top','Element placed','Done'],3);
+  buildExp({op:'Push',value:v,before:before.length?`TOP→[${[...before].reverse().join(',')}]`:'(empty)',after:`TOP→[${[...stackData].reverse().join(',')}]`,complexity:'O(1)',msg:`${v} pushed to TOP. Stack follows LIFO — last inserted is first to leave.`});
+  renderViz();
+}
+async function deleteStack(v){
+  if(!stackData.length){toast('Stack is empty!');return;}
+  if(!stackData.includes(v)){toast(`❌ ${v} not found in Stack!`);return;}
+  const top=stackData[stackData.length-1];
+  if(top!==v){toast(`❌ ${v} is not at TOP! Top element is ${top}. Stack is LIFO — can only pop top.`);return;}
+  const before=[...stackData];
+  setSteps(['Check TOP','Highlight TOP','Pop element','Done'],0);
+  await delay(200);setSteps(['Check TOP','Highlight TOP','Pop element','Done'],1);
+  renderViz('pop-anim',stackData.length-1);
+  await delay(500);setSteps(['Check TOP','Highlight TOP','Pop element','Done'],2);
+  stackData.pop();await delay(400);
+  setSteps(['Check TOP','Highlight TOP','Pop element','Done'],3);
+  buildExp({op:'Pop',value:v,before:`TOP→[${[...before].reverse().join(',')}]`,after:stackData.length?`TOP→[${[...stackData].reverse().join(',')}]`:'(empty)',complexity:'O(1)',msg:`${v} popped from TOP. LIFO order maintained.`});
+  renderViz();
+}
+function searchArr_Stack(v){searchArr(v);}
+
+// ═══════════════════════════════════════════════
+// QUEUE OPS
+// ═══════════════════════════════════════════════
+async function insertQueue(v){
+  const before=[...queueData];queueData.push(v);
+  setSteps(['Enqueue starts','Move to REAR','Placed at REAR','Done'],0);
+  await delay(200);setSteps(['Enqueue starts','Move to REAR','Placed at REAR','Done'],1);
+  renderViz('new',queueData.length-1);
+  await delay(500);setSteps(['Enqueue starts','Move to REAR','Placed at REAR','Done'],2);
+  await delay(300);setSteps(['Enqueue starts','Move to REAR','Placed at REAR','Done'],3);
+  buildExp({op:'Enqueue',value:v,before:before.length?`FRONT[${before.join('→')}]REAR`:'(empty)',after:`FRONT[${queueData.join('→')}]REAR`,complexity:'O(1)',msg:`${v} enqueued at REAR. Queue follows FIFO — first in, first out.`});
+  renderViz();
+}
+async function deleteQueue(v){
+  if(!queueData.length){toast('Queue is empty!');return;}
+  if(!queueData.includes(v)){toast(`❌ ${v} not found in Queue!`);return;}
+  const front=queueData[0];
+  if(front!==v){toast(`❌ ${v} is not at FRONT! Front element is ${front}. Queue is FIFO — can only dequeue front.`);return;}
+  const before=[...queueData];
+  setSteps(['Check FRONT','Highlight FRONT','Dequeue','Shift FRONT pointer','Done'],0);
+  await delay(200);setSteps(['Check FRONT','Highlight FRONT','Dequeue','Shift FRONT pointer','Done'],1);
+  renderViz('dequeue-anim',0);
+  await delay(500);setSteps(['Check FRONT','Highlight FRONT','Dequeue','Shift FRONT pointer','Done'],2);
+  queueData.shift();await delay(400);
+  setSteps(['Check FRONT','Highlight FRONT','Dequeue','Shift FRONT pointer','Done'],3);
+  await delay(300);setSteps(['Check FRONT','Highlight FRONT','Dequeue','Shift FRONT pointer','Done'],4);
+  buildExp({op:'Dequeue',value:v,before:`FRONT[${before.join('→')}]REAR`,after:queueData.length?`FRONT[${queueData.join('→')}]REAR`:'(empty)',complexity:'O(1)',msg:`${v} dequeued from FRONT. FIFO order maintained.`});
+  renderViz();
+}
+
+// ═══════════════════════════════════════════════
+// LINKED LIST OPS
+// ═══════════════════════════════════════════════
+async function insertLL(v){
+  const before=[...llData];llData.push(v);
+  setSteps(['Create node','Traverse to tail','Link new node','Update pointer','Done'],0);
+  await delay(200);
+  for(let i=1;i<=3;i++){setSteps(['Create node','Traverse to tail','Link new node','Update pointer','Done'],i);await delay(350);}
+  renderViz('new',llData.length-1);
+  await delay(400);setSteps(['Create node','Traverse to tail','Link new node','Update pointer','Done'],4);
+  buildExp({op:'Insert at Tail',value:v,before:before.length?'HEAD→'+before.join('→')+'→NULL':'(empty)',after:'HEAD→'+llData.join('→')+'→NULL',complexity:'O(n)',msg:`New node [${v}|→] created and linked at tail. Previous last node's pointer updated.`});
+  renderViz();
+}
+async function deleteLL(v){
+  const idx=llData.indexOf(v);
+  if(idx===-1){toast(`❌ ${v} not found in Linked List!`);return;}
+  const before=[...llData];
+  setSteps(['Traverse to find','Found node','Relink pointers','Remove node','Done'],0);
+  await delay(300);
+  for(let i=1;i<=2;i++){setSteps(['Traverse to find','Found node','Relink pointers','Remove node','Done'],i);await delay(400);}
+  renderViz('ll-remove',idx);
+  await delay(500);setSteps(['Traverse to find','Found node','Relink pointers','Remove node','Done'],3);
+  llData.splice(idx,1);await delay(400);
+  setSteps(['Traverse to find','Found node','Relink pointers','Remove node','Done'],4);
+  buildExp({op:'Delete Node',value:v,before:'HEAD→'+before.join('→')+'→NULL',after:llData.length?'HEAD→'+llData.join('→')+'→NULL':'(empty)',complexity:'O(n)',msg:`Node [${v}] found at position ${idx}. Previous node's pointer now skips to next node. Node removed.`});
+  renderViz();
+}
+
+// ═══════════════════════════════════════════════
+// BST OPS
+// ═══════════════════════════════════════════════
+function bstInsert(root,v){if(!root)return{v,l:null,r:null};if(v<root.v)root.l=bstInsert(root.l,v);else if(v>root.v)root.r=bstInsert(root.r,v);return root;}
+function bstDelete(root,v){if(!root)return null;if(v<root.v){root.l=bstDelete(root.l,v);}else if(v>root.v){root.r=bstDelete(root.r,v);}else{if(!root.l)return root.r;if(!root.r)return root.l;let s=root.r;while(s.l)s=s.l;root.v=s.v;root.r=bstDelete(root.r,s.v);}return root;}
+function bstSearch(root,v){if(!root)return false;if(root.v===v)return true;return v<root.v?bstSearch(root.l,v):bstSearch(root.r,v);}
+function bstInorder(root){if(!root)return[];return[...bstInorder(root.l),root.v,...bstInorder(root.r)];}
+
+async function insertTree(v){
+  const before=bstRoot?bstInorder(bstRoot).join(', '):'(empty)';
+  setSteps(['Start at root','Compare & traverse','Find empty spot','Insert node','Done'],0);
+  bstRoot=bstInsert(bstRoot,v);
+  for(let i=1;i<=4;i++){setSteps(['Start at root','Compare & traverse','Find empty spot','Insert node','Done'],i);await delay(350);}
+  buildExp({op:'BST Insert',value:v,before,after:bstInorder(bstRoot).join(', '),complexity:'O(log n) avg',msg:`${v} inserted. Path: compare with root → go left if smaller, right if larger → until empty slot found.`});
+  renderViz('bst-new',v);
+}
+async function deleteTree(v){
+  if(!bstRoot){toast('Tree is empty!');return;}
+  if(!bstSearch(bstRoot,v)){toast(`❌ ${v} not found in Tree!`);return;}
+  const before=bstInorder(bstRoot).join(', ');
+  setSteps(['Find node','Identify case','Replace/Remove','Rebalance pointers','Done'],0);
+  for(let i=1;i<=2;i++){setSteps(['Find node','Identify case','Replace/Remove','Rebalance pointers','Done'],i);await delay(400);}
+  bstRoot=bstDelete(bstRoot,v);
+  for(let i=3;i<=4;i++){setSteps(['Find node','Identify case','Replace/Remove','Rebalance pointers','Done'],i);await delay(350);}
+  buildExp({op:'BST Delete',value:v,before,after:bstRoot?bstInorder(bstRoot).join(', '):'(empty)',complexity:'O(log n) avg',msg:`${v} deleted. If two children: replaced with in-order successor (smallest in right subtree).`});
+  renderViz();
+}
+async function searchTree(v){
+  if(!bstRoot){toast('Tree is empty!');return;}
+  const found=bstSearch(bstRoot,v);
+  setSteps(['Start at root','Compare value','Traverse left/right',found?'Found!':'Not Found'],found?3:3);
+  buildExp({op:'BST Search',value:v,result:found?`✅ Found in BST`:`❌ Not Found`,complexity:'O(log n) avg',msg:found?`${v} found by BST traversal (left if smaller, right if larger).`:`${v} not found — reached null after traversal.`});
+  renderViz('bst-search',v,found);
+}
+function displayTree(){
+  const io=bstRoot?bstInorder(bstRoot):[];
+  setSteps(['In-order: L→Root→R','Output sorted']);
+  buildExp({op:'In-order Traversal',value:'All nodes',result:io.length?io.join(' → '):'(empty)',complexity:'O(n)',msg:'In-order traversal visits Left → Root → Right. For BST this gives sorted ascending output.'});
+  renderViz();
+}
+
+// ═══════════════════════════════════════════════
+// HEAP OPS
+// ═══════════════════════════════════════════════
+function heapifyUp(a,i){while(i>0){const p=Math.floor((i-1)/2);if(a[p]<a[i]){[a[p],a[i]]=[a[i],a[p]];i=p;}else break;}}
+function heapifyDown(a,i){const n=a.length;while(true){let lg=i;const l=2*i+1,r=2*i+2;if(l<n&&a[l]>a[lg])lg=l;if(r<n&&a[r]>a[lg])lg=r;if(lg!==i){[a[i],a[lg]]=[a[lg],a[i]];i=lg;}else break;}}
+
+async function insertHeap(v){
+  const before=[...heapArr];heapArr.push(v);heapifyUp(heapArr,heapArr.length-1);
+  setSteps(['Add at end','Heapify-Up','Compare with parent','Swap if needed','Done'],0);
+  for(let i=1;i<=4;i++){setSteps(['Add at end','Heapify-Up','Compare with parent','Swap if needed','Done'],i);await delay(380);}
+  buildExp({op:'Heap Insert',value:v,before:before.length?before.join(', '):'(empty)',after:heapArr.join(', '),complexity:'O(log n)',msg:`${v} added at end and bubbled up (heapify-up) until Max Heap property restored. Root = max = ${heapArr[0]}.`});
+  renderViz('heap-new',v);
+}
+async function deleteHeap(v){
+  if(!heapArr.length){toast('Heap is empty!');return;}
+  if(!heapArr.includes(v)){toast(`❌ ${v} not found in Heap!`);return;}
+  const before=[...heapArr];const maxVal=heapArr[0];
+  setSteps(['Remove root (max)','Move last to root','Heapify-Down','Swap with larger child','Done'],0);
+  for(let i=1;i<=4;i++){setSteps(['Remove root (max)','Move last to root','Heapify-Down','Swap with larger child','Done'],i);await delay(380);}
+  heapArr[0]=heapArr[heapArr.length-1];heapArr.pop();heapifyDown(heapArr,0);
+  buildExp({op:'Delete Max',value:maxVal,before:before.join(', '),after:heapArr.length?heapArr.join(', '):'(empty)',complexity:'O(log n)',msg:`Max element ${maxVal} removed from root. Last element moved to root and heapify-down applied. New max = ${heapArr[0]||'none'}.`});
+  renderViz();
+}
+async function searchHeap(v){
+  const found=heapArr.includes(v);
+  setSteps(['Linear scan heap',found?'Found!':'Not Found']);
+  buildExp({op:'Heap Search',value:v,result:found?`✅ Found in Heap`:`❌ Not Found`,complexity:'O(n)',msg:found?`${v} found in heap (linear scan needed — heap doesn't support O(log n) search).`:`${v} not found after scanning all ${heapArr.length} elements.`});
+  renderViz('heap-search',v,found);
+}
+function displayHeap(){
+  setSteps(['Read array representation']);
+  buildExp({op:'Display Heap',value:'Array form',result:heapArr.length?heapArr.join(', '):'(empty)',complexity:'O(n)',msg:`Max Heap as array: index 0=root=${heapArr[0]||'-'}. Children of i at 2i+1 & 2i+2.`});
+  renderViz();
+}
+
+// ═══════════════════════════════════════════════
+// GRAPH OPS
+// ═══════════════════════════════════════════════
+async function insertGraph(v){
+  if(graphV.some(x=>x.val===v)){toast(`⚠️ Vertex ${v} already exists!`);return;}
+  const before=graphV.map(x=>x.val).join(', ')||'(empty)';
+  const prevV=graphV.length?graphV[graphV.length-1].val:null;
+  graphV.push({val:v,x:0,y:0});
+  if(prevV!==null){const ex=graphE.some(e=>(e[0]===v&&e[1]===prevV)||(e[0]===prevV&&e[1]===v));if(!ex)graphE.push([prevV,v]);}
+  setSteps(['Add vertex','Connect to previous','Update adjacency list','Done'],0);
+  for(let i=1;i<=3;i++){setSteps(['Add vertex','Connect to previous','Update adjacency list','Done'],i);await delay(350);}
+  buildExp({op:'Add Vertex',value:v,before,after:graphV.map(x=>x.val).join(', '),complexity:'O(1)',msg:`Vertex ${v} added${prevV!==null?` and edge ${prevV}↔${v} created`:''}.`});
+  renderViz('graph-new',v);
+}
+async function deleteGraph(v){
+  const idx=graphV.findIndex(x=>x.val===v);
+  if(idx===-1){toast(`❌ Vertex ${v} not found!`);return;}
+  const before=graphV.map(x=>x.val).join(', ');
+  setSteps(['Find vertex','Remove edges','Remove vertex','Done'],0);
+  for(let i=1;i<=3;i++){setSteps(['Find vertex','Remove edges','Remove vertex','Done'],i);await delay(350);}
+  graphV.splice(idx,1);graphE=graphE.filter(e=>e[0]!==v&&e[1]!==v);
+  buildExp({op:'Remove Vertex',value:v,before,after:graphV.map(x=>x.val).join(', ')||'(empty)',complexity:'O(V+E)',msg:`Vertex ${v} and all its connected edges removed from graph.`});
+  renderViz();
+}
+async function searchGraph(v){
+  const found=graphV.some(x=>x.val===v);
+  setSteps(['Scan vertices',found?'Found!':'Not Found']);
+  buildExp({op:'Graph Search',value:v,result:found?`✅ Vertex ${v} found`:`❌ Vertex ${v} not found`,complexity:'O(V)',msg:found?`Vertex ${v} exists in the graph.`:`Vertex ${v} does not exist.`});
+  renderViz('graph-search',v,found);
+}
+function displayGraph(){
+  const adj=graphV.map(v=>{const nb=graphE.filter(e=>e[0]===v.val||e[1]===v.val).map(e=>e[0]===v.val?e[1]:e[0]).join(', ');return`${v.val}:[${nb||'none'}]`;}).join(' | ');
+  setSteps(['Build adjacency list','Display']);
+  buildExp({op:'Display Graph',value:'Adjacency List',result:adj||'(empty)',complexity:'O(V+E)',msg:'Each vertex shows its neighbor list. Graph uses adjacency list representation.'});
+  renderViz();
+}
+
+// ═══════════════════════════════════════════════
+// RENDER DISPATCHER
+// ═══════════════════════════════════════════════
+function renderViz(hint,param,param2){
+  const canvas=document.getElementById('viz-canvas');
+  const empty=()=>{canvas.innerHTML='<div class="empty-st"><div class="empty-icon">📭</div><p>Insert values to visualize</p></div>';};
+  const fns={Array:renderArray,Stack:renderStack,Queue:renderQueue,'Linked List':renderLL,Tree:renderTree,Heap:renderHeap,Graph:renderGraph};
+  const isEmpty={Array:!arrData.length,Stack:!stackData.length,Queue:!queueData.length,'Linked List':!llData.length,Tree:!bstRoot,Heap:!heapArr.length,Graph:!graphV.length};
+  if(isEmpty[currentDS]){empty();return;}
+  canvas.innerHTML='';
+  fns[currentDS](canvas,hint,param,param2);
+}
+
+// ═══════════════════════════════════════════════
+// RENDER ARRAY
+// ═══════════════════════════════════════════════
+function renderArray(canvas,hint,param){
+  const wrap=document.createElement('div');wrap.className='arr-wrap';
+  arrData.forEach((val,i)=>{
+    const cell=document.createElement('div');cell.className='arr-cell';
+    const box=document.createElement('div');box.className='arr-box';
+    if(hint==='new'&&i===param)box.classList.add('new-item');
+    if(hint==='highlight'&&i===param)box.classList.add('highlight');
+    if(hint==='remove'&&i===param)box.classList.add('removing');
+    if(hint==='search'&&val===param)box.classList.add(arrData.includes(param)?'found':'notfound');
+    box.textContent=val;
+    const idx=document.createElement('div');idx.className='arr-idx';idx.textContent=`[${i}]`;
+    cell.appendChild(box);cell.appendChild(idx);wrap.appendChild(cell);
+    if(i<arrData.length-1){const ar=document.createElement('div');ar.className='arr-arrow';ar.textContent='→';wrap.appendChild(ar);}
+  });
+  canvas.appendChild(wrap);
+}
+
+// ═══════════════════════════════════════════════
+// RENDER STACK
+// ═══════════════════════════════════════════════
+function renderStack(canvas,hint,param){
+  const wrap=document.createElement('div');wrap.className='stack-wrap';
+  const topLbl=document.createElement('div');topLbl.className='stack-top-lbl';topLbl.textContent='TOP';wrap.appendChild(topLbl);
+  const reversed=[...stackData].reverse();
+  reversed.forEach((val,i)=>{
+    const item=document.createElement('div');
+    item.className='stack-item '+(i===0?'top-item':'normal-item');
+    if(hint==='new'&&i===0)item.classList.add('push-anim');
+    if(hint==='pop-anim'&&i===0)item.classList.add('pop-anim');
+    item.textContent=val;
+    if(i===0){const lbl=document.createElement('span');lbl.style.cssText='position:absolute;right:-48px;font-size:10px;font-weight:600;color:var(--lv6);';lbl.textContent='← TOP';item.style.position='relative';item.appendChild(lbl);}
+    wrap.appendChild(item);
+  });
+  const base=document.createElement('div');base.className='stack-base';wrap.appendChild(base);
+  const bot=document.createElement('div');bot.className='stack-bot-lbl';bot.textContent='BOTTOM';wrap.appendChild(bot);
+  canvas.appendChild(wrap);
+}
+
+// ═══════════════════════════════════════════════
+// RENDER QUEUE
+// ═══════════════════════════════════════════════
+function renderQueue(canvas,hint,param){
+  const wrap=document.createElement('div');wrap.className='queue-wrap';
+  const track=document.createElement('div');track.className='queue-track';
+  const fl=document.createElement('div');fl.className='q-label front';fl.textContent='FRONT ▶';track.appendChild(fl);
+  queueData.forEach((val,i)=>{
+    const cell=document.createElement('div');cell.className='q-cell';
+    if(hint==='new'&&i===queueData.length-1)cell.classList.add('enqueue-anim');
+    if(hint==='dequeue-anim'&&i===0)cell.classList.add('dequeue-anim');
+    cell.textContent=val;track.appendChild(cell);
+    if(i<queueData.length-1){const d=document.createElement('div');d.className='q-div';track.appendChild(d);}
+  });
+  const rl=document.createElement('div');rl.className='q-label rear';rl.style.marginLeft='10px';rl.textContent='▶ REAR';track.appendChild(rl);
+  wrap.appendChild(track);canvas.appendChild(wrap);
+}
+
+// ═══════════════════════════════════════════════
+// RENDER LINKED LIST
+// ═══════════════════════════════════════════════
+function renderLL(canvas,hint,param){
+  const wrap=document.createElement('div');wrap.className='ll-wrap';
+  const track=document.createElement('div');track.className='ll-track';
+  const hb=document.createElement('div');hb.className='ll-head-badge';hb.textContent='HEAD';track.appendChild(hb);
+  const ha=document.createElement('div');ha.className='ll-arrow-connector';ha.textContent='→';track.appendChild(ha);
+  llData.forEach((val,i)=>{
+    const node=document.createElement('div');node.className='ll-node';
+    if(hint==='new'&&i===llData.length-1)node.style.animation='nodeSlide .4s cubic-bezier(.34,1.56,.64,1)';
+    if(hint==='ll-remove'&&i===param)node.classList.add('removing');
+    const db=document.createElement('div');db.className='ll-data-box';db.textContent=val;
+    const pb=document.createElement('div');
+    if(i===llData.length-1){pb.className='ll-ptr-box null-box';pb.textContent='NULL';}
+    else{pb.className='ll-ptr-box';pb.textContent='→';}
+    node.appendChild(db);node.appendChild(pb);track.appendChild(node);
+    if(i<llData.length-1){const ac=document.createElement('div');ac.className='ll-arrow-connector';ac.textContent='→';track.appendChild(ac);}
+  });
+  wrap.appendChild(track);canvas.appendChild(wrap);
+}
+
+// ═══════════════════════════════════════════════
+// RENDER TREE (BST)
+// ═══════════════════════════════════════════════
+function renderTree(canvas,hint,param,found){
+  const W=680,H=320;
+  const svg=mkSVG(W,H);
+  const nodes=[],edges=[];
+  function layout(node,x,y,spread){
+    if(!node)return;
+    nodes.push({v:node.v,x,y});
+    if(node.l){const cx=x-spread,cy=y+72;edges.push([x,y,cx,cy]);layout(node.l,cx,cy,spread/1.85);}
+    if(node.r){const cx=x+spread,cy=y+72;edges.push([x,y,cx,cy]);layout(node.r,cx,cy,spread/1.85);}
+  }
+  layout(bstRoot,W/2,42,145);
+  edges.forEach(([x1,y1,x2,y2])=>{const l=mkEl('line');attrs(l,{x1,y1,x2,y2,class:'tree-edge'});svg.appendChild(l);});
+  nodes.forEach(n=>{
+    const isRoot=n.v===bstRoot.v;
+    const isSearch=hint==='bst-search'&&n.v===param;
+    const isNew=hint==='bst-new'&&n.v===param;
+    const g=mkEl('g');if(isNew)g.classList.add('node-appear');
+    const c=mkEl('circle');
+    let cls='tree-circ'+(isRoot?' root-circ':'');
+    if(isSearch)cls=found?'tree-circ found-circ':'tree-circ notfound-circ';
+    attrs(c,{cx:n.x,cy:n.y,r:23,class:cls});
+    const t=mkEl('text');
+    let tcls='tree-txt'+(isRoot?' root-txt':'');
+    if(isSearch)tcls=found?'tree-txt found-txt':'tree-txt notfound-txt';
+    attrs(t,{x:n.x,y:n.y,class:tcls});t.textContent=n.v;
+    g.appendChild(c);g.appendChild(t);svg.appendChild(g);
+  });
+  canvas.appendChild(svg);
+}
+
+// ═══════════════════════════════════════════════
+// RENDER HEAP
+// ═══════════════════════════════════════════════
+function renderHeap(canvas,hint,param,found){
+  const W=680,H=320;const svg=mkSVG(W,H);
+  const pos=[];
+  function calc(i,x,y,sp){if(i>=heapArr.length)return;pos[i]={x,y};calc(2*i+1,x-sp,y+72,sp/1.85);calc(2*i+2,x+sp,y+72,sp/1.85);}
+  calc(0,W/2,42,145);
+  heapArr.forEach((_,i)=>{
+    [2*i+1,2*i+2].forEach(ch=>{if(ch<heapArr.length&&pos[i]&&pos[ch]){const l=mkEl('line');attrs(l,{x1:pos[i].x,y1:pos[i].y,x2:pos[ch].x,y2:pos[ch].y,class:'tree-edge'});svg.appendChild(l);}});
+  });
+  heapArr.forEach((val,i)=>{
+    if(!pos[i])return;
+    const{x,y}=pos[i];
+    const isRoot=i===0;const isSearch=hint==='heap-search'&&val===param;const isNew=hint==='heap-new'&&val===param;
+    const g=mkEl('g');if(isNew)g.classList.add('node-appear');
+    const c=mkEl('circle');
+    let cls='tree-circ'+(isRoot?' root-circ':'');
+    if(isSearch)cls=found?'tree-circ found-circ':'tree-circ notfound-circ';
+    attrs(c,{cx:x,cy:y,r:23,class:cls});
+    const t=mkEl('text');
+    let tcls='tree-txt'+(isRoot?' root-txt':'');
+    if(isSearch)tcls=found?'tree-txt found-txt':'tree-txt notfound-txt';
+    attrs(t,{x,y,class:tcls});t.textContent=val;
+    g.appendChild(c);g.appendChild(t);svg.appendChild(g);
+  });
+  canvas.appendChild(svg);
+}
+
+// ═══════════════════════════════════════════════
+// RENDER GRAPH
+// ═══════════════════════════════════════════════
+function renderGraph(canvas,hint,param,found){
+  const W=680,H=300;const svg=mkSVG(W,H);
+  const n=graphV.length;const cx=W/2,cy=H/2,r=Math.min(120,35+n*16);
+  graphV.forEach((v,i)=>{const a=(2*Math.PI*i/n)-Math.PI/2;v.x=cx+r*Math.cos(a);v.y=cy+r*Math.sin(a);});
+  graphE.forEach(([a,b])=>{
+    const va=graphV.find(x=>x.val===a),vb=graphV.find(x=>x.val===b);if(!va||!vb)return;
+    const l=mkEl('line');attrs(l,{x1:va.x,y1:va.y,x2:vb.x,y2:vb.y,class:'graph-edge-line'});svg.appendChild(l);
+  });
+  graphV.forEach(v=>{
+    const isSearch=hint==='graph-search'&&v.val===param;const isNew=hint==='graph-new'&&v.val===param;
+    const g=mkEl('g');if(isNew)g.classList.add('node-appear');
+    const c=mkEl('circle');
+    let cls='graph-circ';if(isSearch)cls=found?'graph-circ search-found':'graph-circ search-nf';
+    attrs(c,{cx:v.x,cy:v.y,r:26,class:cls});
+    const t=mkEl('text');attrs(t,{x:v.x,y:v.y,class:'graph-txt'});t.textContent=v.val;
+    g.appendChild(c);g.appendChild(t);svg.appendChild(g);
+  });
+  canvas.appendChild(svg);
+}
+
+// ═══════════════════════════════════════════════
+// SVG HELPERS
+// ═══════════════════════════════════════════════
+function mkSVG(w,h){const s=mkEl('svg');attrs(s,{viewBox:`0 0 ${w} ${h}`,class:'svg-canvas'});return s;}
+function mkEl(tag){return document.createElementNS('http://www.w3.org/2000/svg',tag);}
+function attrs(el,obj){Object.entries(obj).forEach(([k,v])=>el.setAttribute(k,v));}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ═══════════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════════
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement===document.getElementById('ds-input'))opInsert();});
+</script>
+</body>
+</html>
